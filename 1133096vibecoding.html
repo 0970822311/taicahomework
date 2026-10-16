@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>密室逃脫：數位保險箱</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        body {
+            margin: 0;
+            background-color: #111;
+            color: #0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background-color: #222;
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        h1 {
+            margin-top: 0;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px #0f0;
+        }
+        .level-indicator {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #aaa;
+        }
+        .puzzle-text {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            line-height: 1.8;
+            white-space: pre-line;
+            text-align: left;
+            display: inline-block;
+        }
+        .hint {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            display: block;
+        }
+        input[type="text"] {
+            background-color: #000;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 10px 15px;
+            font-size: 1.2rem;
+            width: 80%;
+            margin-bottom: 20px;
+            text-align: center;
+            outline: none;
+            border-radius: 3px;
+        }
+        input[type="text"]:focus {
+            box-shadow: 0 0 10px #0f0;
+        }
+        button {
+            background-color: #0f0;
+            color: #000;
+            border: none;
+            padding: 10px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #0c0;
+            box-shadow: 0 0 15px #0f0;
+        }
+        .message {
+            margin-top: 20px;
+            font-weight: bold;
+            height: 24px;
+        }
+        .error {
+            color: #f00;
+            text-shadow: 0 0 5px #f00;
+        }
+        
+        /* 密碼錯誤時的震動特效 */
+        .shake {
+            animation: shake 0.4s;
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="game-container">
+        <h1>ACCESS TERMINAL</h1>
+        <div class="level-indicator" id="level-display">LEVEL 1</div>
+        
+        <div class="puzzle-text" id="puzzle-text">
+            載入中...
+        </div>
+
+        <input type="text" id="answer-input" placeholder="ENTER PASSCODE..." autocomplete="off">
+        <br>
+        <button onclick="checkAnswer()">UNLOCK</button>
+        
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        // 關卡設計：加入 F12 提示機制與惡搞題目
+        const levels = [
+            {
+                text: "[ 系統安全驗證 ]\n請破解以下數列找出下一個數字：\n2, 6, 12, 20, 30, ?\n\n<span class='hint'>(提示：如果不知道答案可以去F12找)</span>",
+                answer: "42" 
+            },
+            {
+                text: "[ 核心邏輯鎖 ]\n注意數字的形狀：\n1111 = 0\n2222 = 0\n8096 = 5\n8888 = 8\n請問 9981 = ?\n\n<span class='hint'>(提示：如果不知道答案可以去F12找)</span>",
+                answer: "4" 
+            },
+            {
+                text: "[ 最終保險箱 ]\n懶得想題目了，自己去F12裡面找。\n\n<span class='hint'>(提示：如果不知道答案可以去F12找)</span>",
+                answer: "hackerman" 
+            }
+        ];
+
+        let currentLevel = 0;
+        
+        const puzzleTextElement = document.getElementById('puzzle-text');
+        const levelDisplayElement = document.getElementById('level-display');
+        const answerInput = document.getElementById('answer-input');
+        const messageElement = document.getElementById('message');
+        const gameContainer = document.getElementById('game-container');
+
+        function loadLevel() {
+            if (currentLevel < levels.length) {
+                levelDisplayElement.innerText = `LEVEL ${currentLevel + 1}`;
+                // 使用 innerHTML 以便渲染 span 標籤
+                puzzleTextElement.innerHTML = levels[currentLevel].text;
+                answerInput.value = '';
+                answerInput.focus();
+                messageElement.innerText = '';
+                messageElement.className = 'message';
+
+                // 開發者工具彩蛋：將答案印在 Console 中，並加上醒目的綠色樣式
+                console.clear(); // 清空之前的訊息
+                console.log(
+                    `%c[系統提示] 偵測到駭客入侵...\nLevel ${currentLevel + 1} 的解答是: ${levels[currentLevel].answer}`, 
+                    "color: #0f0; font-size: 16px; font-weight: bold; background: #000; padding: 10px; border: 1px solid #0f0;"
+                );
+            } else {
+                // 通關畫面
+                console.clear();
+                console.log("%c[系統提示] 終端機已完全解鎖。", "color: #0f0; font-size: 16px; font-weight: bold;");
+                gameContainer.innerHTML = `
+                    <h1 style="color: #fff; text-shadow: 0 0 15px #fff;">ACCESS GRANTED</h1>
+                    <div class="puzzle-text" style="color: #0f0; text-align: center;">
+                        成功解鎖！<br><br>
+                        你具備了優秀的駭客（與看 Console）潛力。<br>
+                        🎉 恭喜通關 🎉
+                    </div>
+                `;
+            }
+        }
+
+        function checkAnswer() {
+            const userAnswer = answerInput.value.trim().toLowerCase();
+            const correctAnswer = levels[currentLevel].answer.toLowerCase();
+
+            if (userAnswer === correctAnswer) {
+                messageElement.innerText = ">> 解鎖成功！載入下一關...";
+                messageElement.style.color = "#0f0";
+                currentLevel++;
+                setTimeout(loadLevel, 1200);
+            } else {
+                messageElement.innerText = ">> 密碼錯誤，拒絕存取！";
+                messageElement.className = 'message error';
+                
+                // 加入震動特效
+                gameContainer.classList.remove('shake'); // 移除舊的避免無法重複觸發
+                void gameContainer.offsetWidth; // 觸發 reflow
+                gameContainer.classList.add('shake');
+            }
+        }
+
+        // 支援按 Enter 鍵送出
+        answerInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                checkAnswer();
+            }
+        });
+
+        // 初始化遊戲
+        loadLevel();
+    </script>
+</body>
+</html>
